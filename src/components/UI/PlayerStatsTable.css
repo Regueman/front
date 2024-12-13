@@ -1,0 +1,34 @@
+.player-stats-table {
+    margin-top: 20px;
+    text-align: center;
+    max-width: 100%; /* Asegura que el contenedor no exceda su ancho */
+    overflow-x: auto; /* Permite desplazamiento horizontal si es necesario */
+    padding: 10px; /* Espaciado interno opcional */
+    box-sizing: border-box; /* Incluye padding y borde en el tamaño total */
+  }
+  
+  .player-stats-table table {
+    width: 100%; /* La tabla ocupa el ancho completo del contenedor */
+    max-width: 100%; /* Evita que la tabla crezca más allá del contenedor */
+    border-collapse: collapse; /* Quita espacios entre celdas */
+  }
+  
+  .player-stats-table th,
+  .player-stats-table td {
+    border: 1px solid #ddd; /* Bordes suaves */
+    padding: 8px; /* Espaciado interno */
+    text-align: center; /* Centrar texto */
+    word-wrap: break-word; /* Ajusta texto largo a varias líneas */
+    max-width: 150px; /* Limita el ancho máximo de las celdas */
+  }
+  
+  .player-stats-table th {
+    background-color: #f4f4f4; /* Fondo claro */
+    font-weight: bold; /* Negrita */
+  }
+  
+  .player-stats-table-wrapper {
+    max-width: 100%; /* Asegura que el contenedor no exceda su ancho */
+    overflow-x: auto; /* Permite desplazamiento horizontal para tablas anchas */
+  }
+  
