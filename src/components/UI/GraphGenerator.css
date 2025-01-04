@@ -71,3 +71,35 @@
     border-collapse: collapse; /* Elimina espacios entre celdas */
   }
   
+  .rankings-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 5px;
+    margin-bottom: 15px;
+  }
+  
+  .team-rankings,
+  .opponent-rankings {
+    flex: 1;
+    background: #f4f4f4;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+  }
+  
+  .ranking-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 5px;
+    margin-top: 10px;
+  }
+  
+  .ranking-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 5px;
+    text-align: center;
+    font-size: 12px;
+  }
+  

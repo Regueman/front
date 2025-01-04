@@ -26,7 +26,7 @@ function App() {
   // Fetch de los jugadores cuando se selecciona un equipo local
   useEffect(() => {
     if (localTeam) {
-      fetch(`http://127.0.0.1:5000/api/players/${encodeURIComponent(localTeam)}/`)
+      fetch(`http://127.0.0.1:5000/api/players/${encodeURIComponent(localTeam)}`)
         .then((res) => res.json())
         .then((data) => setLocalPlayers(data))
         .catch((error) => console.error("Error fetching local players:", error));
@@ -38,7 +38,7 @@ function App() {
   // Fetch de los jugadores cuando se selecciona un equipo visitante
   useEffect(() => {
     if (visitorTeam) {
-      fetch(`http://127.0.0.1:5000/api/players/${encodeURIComponent(visitorTeam)}/`)
+      fetch(`http://127.0.0.1:5000/api/players/${encodeURIComponent(visitorTeam)}`)
         .then((res) => res.json())
         .then((data) => setVisitorPlayers(data))
         .catch((error) => console.error("Error fetching visitor players:", error));
@@ -47,40 +47,22 @@ function App() {
     }
   }, [visitorTeam]);
 
-  useEffect(() => {
-    const updateTeams = async () => {
-      try {
-        const response = await fetch("http://127.0.0.1:5000/api/update_teams", {
-          method: "GET",
-        });
-  
-        if (!response.ok) {
-          throw new Error("Error al actualizar los equipos");
-        }
-  
-        console.log("Equipos actualizados correctamente");
-      } catch (error) {
-        console.error("Error al actualizar los equipos:", error);
-      }
-    };
-  
-    updateTeams();
-  }, []); // Llama a la función una vez al cargar el componente
-  
   // Consultar los datos del jugador en el backend
-  const fetchPlayerData = (teamName, playerName, setPlayerData) => {
-    if (!teamName || !playerName) {
-      alert("Seleccione un equipo y un jugador antes de consultar.");
+  const fetchPlayerData = (teamName, playerName, setPlayerData, homeOrAway, opponentTeam) => {
+    if (!teamName || !playerName || !homeOrAway || !opponentTeam) {
+      alert("Seleccione todos los parámetros antes de consultar.");
       return;
     }
 
-    fetch(`http://127.0.0.1:5000/api/team/${encodeURIComponent(teamName)}/${encodeURIComponent(playerName)}`)
+    const url = `http://127.0.0.1:5000/api/player-stats?team=${encodeURIComponent(teamName)}&player_name=${encodeURIComponent(playerName)}&home_or_away=${encodeURIComponent(homeOrAway)}&opponent=${encodeURIComponent(opponentTeam)}`;
+
+    fetch(url)
       .then((res) => res.json())
       .then((data) => {
         if (data.error) {
           alert(`Error: ${data.error}`);
         } else {
-          setPlayerData(data); // Guardar los datos del jugador
+          setPlayerData(data);
         }
       })
       .catch((error) => console.error("Error fetching player data:", error));
@@ -88,6 +70,41 @@ function App() {
 
   return (
     <div className="container">
+          {/* Equipo Local */}
+          <div className="team-container">
+        <h2>Equipo Local</h2>
+        <TeamSelector
+          teams={teams}
+          selectedTeam={localTeam}
+          onSelectTeam={setLocalTeam}
+          label="Equipo Local"
+        />
+        <PlayerSelector
+          players={localPlayers}
+          selectedPlayer={localPlayer}
+          onSelectPlayer={setLocalPlayer}
+          label="Jugador Local"
+        />
+        <button
+          onClick={() =>
+            fetchPlayerData(localTeam, localPlayer, setLocalPlayerData, "home", visitorTeam)
+          }
+        >
+          Ver Estadísticas
+        </button>
+        {localPlayerData && (
+          <div className="player-data">
+            <h3>Estadísticas del Jugador Local</h3>
+            <GraphGenerator
+              playerName={localPlayer}
+              playerData={localPlayerData}
+              opponentTeam={visitorTeam}
+            />
+          </div>
+        )}
+      </div>
+
+
       {/* Equipo Visitante */}
       <div className="team-container">
         <h2>Equipo Visitante</h2>
@@ -103,7 +120,11 @@ function App() {
           onSelectPlayer={setVisitorPlayer}
           label="Jugador Visitante"
         />
-        <button onClick={() => fetchPlayerData(visitorTeam, visitorPlayer, setVisitorPlayerData)}>
+        <button
+          onClick={() =>
+            fetchPlayerData(visitorTeam, visitorPlayer, setVisitorPlayerData, "away", localTeam)
+          }
+        >
           Ver Estadísticas
         </button>
         {visitorPlayerData && (
@@ -112,41 +133,13 @@ function App() {
             <GraphGenerator
               playerName={visitorPlayer}
               playerData={visitorPlayerData}
-              opponentTeam={localTeam} // Pasamos el equipo visitante como opcional
+              opponentTeam={localTeam}
             />
           </div>
         )}
       </div>
 
-      {/* Equipo Local */}
-      <div className="team-container">
-        <h2>Equipo Local</h2>
-        <TeamSelector
-          teams={teams}
-          selectedTeam={localTeam}
-          onSelectTeam={setLocalTeam}
-          label="Equipo Local"
-        />
-        <PlayerSelector
-          players={localPlayers}
-          selectedPlayer={localPlayer}
-          onSelectPlayer={setLocalPlayer}
-          label="Jugador Local"
-        />
-        <button onClick={() => fetchPlayerData(localTeam, localPlayer, setLocalPlayerData)}>
-          Ver Estadísticas
-        </button>
-        {localPlayerData && (
-          <div className="player-data">
-            <h3>Estadísticas del Jugador Local</h3>
-            <GraphGenerator
-              playerName={localPlayer}
-              playerData={localPlayerData}
-              opponentTeam={visitorTeam} // Pasamos el equipo visitante como opcional
-            />
-          </div>
-        )}
-      </div>
+
     </div>
   );
 }
