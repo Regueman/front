@@ -99,6 +99,7 @@ function App() {
               playerName={localPlayer}
               playerData={localPlayerData}
               opponentTeam={visitorTeam}
+              location="home"
             />
           </div>
         )}
@@ -134,6 +135,7 @@ function App() {
               playerName={visitorPlayer}
               playerData={visitorPlayerData}
               opponentTeam={localTeam}
+              location="away"
             />
           </div>
         )}

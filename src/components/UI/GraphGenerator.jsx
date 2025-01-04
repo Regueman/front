@@ -3,26 +3,29 @@ import { Bar } from "react-chartjs-2";
 import "./GraphGenerator.css";
 import PlayerStatsTable from "./PlayerStatsTable";
 
-function GraphGenerator({ playerName, playerData, opponentTeam }) {
+function GraphGenerator({ playerName, playerData, opponentTeam, location }) {
   const [selectedStat, setSelectedStat] = useState("");
 
   const generateChartData = () => {
     if (!selectedStat || !playerData?.player?.stats) return null;
-
-    const labels = playerData.player.stats.map((game) => game.date);
-    const data = playerData.player.stats.map((game) => game[selectedStat] || 0);
-
+  
+    // Ordenar las estadísticas por fecha
+    const sortedStats = [...playerData.player.stats].sort((a, b) => new Date(a.date) - new Date(b.date));
+  
+    const labels = sortedStats.map((game) => game.date);
+    const data = sortedStats.map((game) => game[selectedStat] || 0);
+  
     const sortedValues = [...data].sort((a, b) => a - b);
     const threshold_90 = sortedValues[Math.floor(sortedValues.length * 0.1)] || 0;
     const threshold_80 = sortedValues[Math.floor(sortedValues.length * 0.2)] || 0;
     const threshold_70 = sortedValues[Math.floor(sortedValues.length * 0.3)] || 0;
-
-    const backgroundColors = playerData.player.stats.map((game) =>
+  
+    const backgroundColors = sortedStats.map((game) =>
       opponentTeam && game.opponent === opponentTeam
         ? "rgba(255, 99, 132, 0.6)" // Color para partidos contra el equipo contrario
         : "rgba(54, 162, 235, 0.6)" // Color para otros partidos
     );
-
+  
     return {
       labels,
       datasets: [
@@ -41,15 +44,15 @@ function GraphGenerator({ playerName, playerData, opponentTeam }) {
       },
     };
   };
+  
 
   const generateRankingsDisplay = () => {
     if (!selectedStat || !playerData) return [];
-  
+
     const rankings = [];
     const { team, opponent, player } = playerData;
-    const homeOrAway = player.home_or_away;
-    const opponentHomeAwayKey = homeOrAway === "home" ? "away" : "home";
-  
+    const opponentLocation = location === "home" ? "away" : "home";
+
     // Team Rankings
     if (team.rankings?.top_average?.[selectedStat]) {
       rankings.push({
@@ -58,15 +61,15 @@ function GraphGenerator({ playerName, playerData, opponentTeam }) {
         value: team.rankings.top_average[selectedStat].value?.toFixed(2) || "N/A",
       });
     }
-  
-    if (team.rankings?.[`top_${homeOrAway}`]?.[selectedStat]) {
+
+    if (team.rankings?.[`top_${location}`]?.[selectedStat]) {
       rankings.push({
-        label: `Equipo (${team.name}) - Top ${homeOrAway}`,
-        position: team.rankings[`top_${homeOrAway}`][selectedStat].position || "N/A",
-        value: team.rankings[`top_${homeOrAway}`][selectedStat].value?.toFixed(2) || "N/A",
+        label: `Equipo (${team.name}) - Top ${location}`,
+        position: team.rankings[`top_${location}`][selectedStat].position || "N/A",
+        value: team.rankings[`top_${location}`][selectedStat].value?.toFixed(2) || "N/A",
       });
     }
-  
+
     // Opponent Rankings
     if (opponent.rankings?.top_average?.[selectedStat]) {
       rankings.push({
@@ -75,15 +78,15 @@ function GraphGenerator({ playerName, playerData, opponentTeam }) {
         value: opponent.rankings.top_average[selectedStat].value?.toFixed(2) || "N/A",
       });
     }
-  
-    if (opponent.rankings?.[`top_${opponentHomeAwayKey}`]?.[selectedStat]) {
+
+    if (opponent.rankings?.[`top_${opponentLocation}`]?.[selectedStat]) {
       rankings.push({
-        label: `Oponente (${opponent.name}) - Top ${opponentHomeAwayKey}`,
-        position: opponent.rankings[`top_${opponentHomeAwayKey}`][selectedStat].position || "N/A",
-        value: opponent.rankings[`top_${opponentHomeAwayKey}`][selectedStat].value?.toFixed(2) || "N/A",
+        label: `Oponente (${opponent.name}) - Top ${opponentLocation}`,
+        position: opponent.rankings[`top_${opponentLocation}`][selectedStat].position || "N/A",
+        value: opponent.rankings[`top_${opponentLocation}`][selectedStat].value?.toFixed(2) || "N/A",
       });
     }
-  
+
     // Team Position Rankings
     if (team.position_rankings?.top_average?.[selectedStat]) {
       rankings.push({
@@ -92,15 +95,15 @@ function GraphGenerator({ playerName, playerData, opponentTeam }) {
         value: team.position_rankings.top_average[selectedStat].value?.toFixed(2) || "N/A",
       });
     }
-  
-    if (team.position_rankings?.[`top_${homeOrAway}`]?.[selectedStat]) {
+
+    if (team.position_rankings?.[`top_${location}`]?.[selectedStat]) {
       rankings.push({
-        label: `Equipo (${team.name}) - Top ${homeOrAway} (Posición ${player.position})`,
-        position: team.position_rankings[`top_${homeOrAway}`][selectedStat].position || "N/A",
-        value: team.position_rankings[`top_${homeOrAway}`][selectedStat].value?.toFixed(2) || "N/A",
+        label: `Equipo (${team.name}) - Top ${location} (Posición ${player.position})`,
+        position: team.position_rankings[`top_${location}`][selectedStat].position || "N/A",
+        value: team.position_rankings[`top_${location}`][selectedStat].value?.toFixed(2) || "N/A",
       });
     }
-  
+
     // Opponent Position Rankings
     if (opponent.position_rankings?.top_average?.[selectedStat]) {
       rankings.push({
@@ -109,19 +112,17 @@ function GraphGenerator({ playerName, playerData, opponentTeam }) {
         value: opponent.position_rankings.top_average[selectedStat].value?.toFixed(2) || "N/A",
       });
     }
-  
-    if (opponent.position_rankings?.[`top_${opponentHomeAwayKey}`]?.[selectedStat]) {
+
+    if (opponent.position_rankings?.[`top_${opponentLocation}`]?.[selectedStat]) {
       rankings.push({
-        label: `Oponente (${opponent.name}) - Top ${opponentHomeAwayKey} (Posición ${player.position})`,
-        position: opponent.position_rankings[`top_${opponentHomeAwayKey}`][selectedStat].position || "N/A",
-        value: opponent.position_rankings[`top_${opponentHomeAwayKey}`][selectedStat].value?.toFixed(2) || "N/A",
+        label: `Oponente (${opponent.name}) - Top ${opponentLocation} (Posición ${player.position})`,
+        position: opponent.position_rankings[`top_${opponentLocation}`][selectedStat].position || "N/A",
+        value: opponent.position_rankings[`top_${opponentLocation}`][selectedStat].value?.toFixed(2) || "N/A",
       });
     }
-  
+
     return rankings.filter((item) => item.position !== "N/A" && item.value !== "N/A");
   };
-  
-  
 
   const stats = ["PTS", "REB", "AST", "2A", "2M", "3A", "3M", "STL", "BLK", "TO"];
   const chartData = generateChartData();
@@ -156,70 +157,103 @@ function GraphGenerator({ playerName, playerData, opponentTeam }) {
       <div className="rankings-container">
         {/* Team Rankings */}
         <div className="team-rankings">
-          <h4>Equipo: {playerData.team.name}</h4>
+          <h4>{playerData.team.name}</h4>
           <div className="ranking-grid">
-            {/* Team Average */}
+            {/* Average */}
             <div className="ranking-card">
               <strong>Average</strong>
               <p>POS: {playerData.team.rankings?.top_average?.[selectedStat]?.position || "N/A"}</p>
               <p>VALUE: {playerData.team.rankings?.top_average?.[selectedStat]?.value?.toFixed(2) || "N/A"}</p>
             </div>
-            {/* Team Home/Away */}
+            {/* Home/Away */}
+            {location === "home" && (
+              <div className="ranking-card">
+                <strong>Home</strong>
+                <p>POS: {playerData.team.rankings?.[`top_home`]?.[selectedStat]?.position || "N/A"}</p>
+                <p>VALUE: {playerData.team.rankings?.[`top_home`]?.[selectedStat]?.value?.toFixed(2) || "N/A"}</p>
+              </div>
+            )}
+            {location === "away" && (
+              <div className="ranking-card">
+                <strong>Away</strong>
+                <p>POS: {playerData.team.rankings?.[`top_away`]?.[selectedStat]?.position || "N/A"}</p>
+                <p>VALUE: {playerData.team.rankings?.[`top_away`]?.[selectedStat]?.value?.toFixed(2) || "N/A"}</p>
+              </div>
+            )}
+            {/* Position Average */}
             <div className="ranking-card">
-              <strong>{`Top ${playerData.player.home_or_away}`}</strong>
-              <p>POS: {playerData.team.rankings?.[`top_${playerData.player.home_or_away}`]?.[selectedStat]?.position || "N/A"}</p>
-              <p>VALUE: {playerData.team.rankings?.[`top_${playerData.player.home_or_away}`]?.[selectedStat]?.value?.toFixed(2) || "N/A"}</p>
-            </div>
-            {/* Team Position Average */}
-            <div className="ranking-card">
-              <strong>Posición Average</strong>
+              <strong>Position Average</strong>
               <p>POS: {playerData.team.position_rankings?.top_average?.[selectedStat]?.position || "N/A"}</p>
               <p>VALUE: {playerData.team.position_rankings?.top_average?.[selectedStat]?.value?.toFixed(2) || "N/A"}</p>
             </div>
-            {/* Team Position Home/Away */}
-            <div className="ranking-card">
-              <strong>{`Posición ${playerData.player.home_or_away}`}</strong>
-              <p>POS: {playerData.team.position_rankings?.[`top_${playerData.player.home_or_away}`]?.[selectedStat]?.position || "N/A"}</p>
-              <p>VALUE: {playerData.team.position_rankings?.[`top_${playerData.player.home_or_away}`]?.[selectedStat]?.value?.toFixed(2) || "N/A"}</p>
-            </div>
+            {/* Position Home/Away */}
+            {location === "home" && (
+              <div className="ranking-card">
+                <strong>Position Home</strong>
+                <p>POS: {playerData.team.position_rankings?.[`top_home`]?.[selectedStat]?.position || "N/A"}</p>
+                <p>VALUE: {playerData.team.position_rankings?.[`top_home`]?.[selectedStat]?.value?.toFixed(2) || "N/A"}</p>
+              </div>
+            )}
+            {location === "away" && (
+              <div className="ranking-card">
+                <strong>Position Away</strong>
+                <p>POS: {playerData.team.position_rankings?.[`top_away`]?.[selectedStat]?.position || "N/A"}</p>
+                <p>VALUE: {playerData.team.position_rankings?.[`top_away`]?.[selectedStat]?.value?.toFixed(2) || "N/A"}</p>
+              </div>
+            )}
           </div>
         </div>
-
+  
         {/* Opponent Rankings */}
         <div className="opponent-rankings">
-          <h4>Oponente: {playerData.opponent.name}</h4>
+          <h4>{playerData.opponent.name}</h4>
           <div className="ranking-grid">
-            {/* Opponent Average */}
+            {/* Average */}
             <div className="ranking-card">
               <strong>Average</strong>
               <p>POS: {playerData.opponent.rankings?.top_average?.[selectedStat]?.position || "N/A"}</p>
               <p>VALUE: {playerData.opponent.rankings?.top_average?.[selectedStat]?.value?.toFixed(2) || "N/A"}</p>
             </div>
-            {/* Opponent Home/Away */}
+            {/* Home/Away */}
+            {location === "home" && (
+              <div className="ranking-card">
+                <strong>Away</strong>
+                <p>POS: {playerData.opponent.rankings?.[`top_away`]?.[selectedStat]?.position || "N/A"}</p>
+                <p>VALUE: {playerData.opponent.rankings?.[`top_away`]?.[selectedStat]?.value?.toFixed(2) || "N/A"}</p>
+              </div>
+            )}
+            {location === "away" && (
+              <div className="ranking-card">
+                <strong>Home</strong>
+                <p>POS: {playerData.opponent.rankings?.[`top_home`]?.[selectedStat]?.position || "N/A"}</p>
+                <p>VALUE: {playerData.opponent.rankings?.[`top_home`]?.[selectedStat]?.value?.toFixed(2) || "N/A"}</p>
+              </div>
+            )}
+            {/* Position Average */}
             <div className="ranking-card">
-              <strong>{`Top ${playerData.player.home_or_away === "home" ? "away" : "home"}`}</strong>
-              <p>POS: {playerData.opponent.rankings?.[`top_${playerData.player.home_or_away === "home" ? "away" : "home"}`]?.[selectedStat]?.position || "N/A"}</p>
-              <p>VALUE: {playerData.opponent.rankings?.[`top_${playerData.player.home_or_away === "home" ? "away" : "home"}`]?.[selectedStat]?.value?.toFixed(2) || "N/A"}</p>
-            </div>
-            {/* Opponent Position Average */}
-            <div className="ranking-card">
-              <strong>Posición Average</strong>
+              <strong>Position Average</strong>
               <p>POS: {playerData.opponent.position_rankings?.top_average?.[selectedStat]?.position || "N/A"}</p>
               <p>VALUE: {playerData.opponent.position_rankings?.top_average?.[selectedStat]?.value?.toFixed(2) || "N/A"}</p>
             </div>
-            {/* Opponent Position Home/Away */}
-            <div className="ranking-card">
-              <strong>{`Posición ${playerData.player.home_or_away === "home" ? "away" : "home"}`}</strong>
-              <p>POS: {playerData.opponent.position_rankings?.[`top_${playerData.player.home_or_away === "home" ? "away" : "home"}`]?.[selectedStat]?.position || "N/A"}</p>
-              <p>VALUE: {playerData.opponent.position_rankings?.[`top_${playerData.player.home_or_away === "home" ? "away" : "home"}`]?.[selectedStat]?.value?.toFixed(2) || "N/A"}</p>
-            </div>
+            {/* Position Home/Away */}
+            {location === "home" && (
+              <div className="ranking-card">
+                <strong>Position Away</strong>
+                <p>POS: {playerData.opponent.position_rankings?.[`top_away`]?.[selectedStat]?.position || "N/A"}</p>
+                <p>VALUE: {playerData.opponent.position_rankings?.[`top_away`]?.[selectedStat]?.value?.toFixed(2) || "N/A"}</p>
+              </div>
+            )}
+            {location === "away" && (
+              <div className="ranking-card">
+                <strong>Position Home</strong>
+                <p>POS: {playerData.opponent.position_rankings?.[`top_home`]?.[selectedStat]?.position || "N/A"}</p>
+                <p>VALUE: {playerData.opponent.position_rankings?.[`top_home`]?.[selectedStat]?.value?.toFixed(2) || "N/A"}</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
-
-
-
-
+  
       {selectedStat ? (
         <div className="chart-container">
           <Bar data={chartData} options={chartOptions} />
@@ -230,6 +264,8 @@ function GraphGenerator({ playerName, playerData, opponentTeam }) {
       )}
     </div>
   );
+  
+  
 }
 
 export default GraphGenerator;
