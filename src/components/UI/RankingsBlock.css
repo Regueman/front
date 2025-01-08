@@ -1,0 +1,55 @@
+.rankings-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 20px;
+  width: 100%;
+  gap: 10px;
+}
+
+.rankings-column {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  width: 150px;  /* Tamaño ajustado para que ocupe menos espacio */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.ranking-item {
+  margin-bottom: 8px;
+  text-align: center; /* Centra el texto dentro de cada item */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.ranking-label {
+  font-size: 12px;
+  font-weight: bold;
+  color: #444;
+  margin-bottom: 4px;
+}
+
+.ranking-value {
+  font-size: 14px;
+  color: #4caf50; /* Color verde para los valores */
+  font-weight: bold;
+}
+
+h5 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin: 8px 0;
+}
+
+.rankings-column .ranking-item .ranking-value {
+  display: flex;
+  gap: 5px;
+  font-size: 14px;
+}

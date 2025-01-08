@@ -1,21 +1,16 @@
 import React, { useState, useEffect } from "react";
 import TeamSelector from "./components/UI/TeamSelector";
-import PlayerSelector from "./components/UI/PlayerSelector";
-import GraphGenerator from "./components/UI/GraphGenerator"; // Importamos el nuevo componente
-import "./App.css"; // Asegúrate de incluir este archivo CSS
+import GraphGenerator from "./components/UI/GraphGenerator";
+import "./App.css";
 
 function App() {
-  const [teams, setTeams] = useState([]); // Lista de equipos
-  const [localTeam, setLocalTeam] = useState(""); // Equipo local seleccionado
-  const [visitorTeam, setVisitorTeam] = useState(""); // Equipo visitante seleccionado
-  const [localPlayers, setLocalPlayers] = useState([]); // Jugadores del equipo local
-  const [visitorPlayers, setVisitorPlayers] = useState([]); // Jugadores del equipo visitante
-  const [localPlayer, setLocalPlayer] = useState(""); // Jugador local seleccionado
-  const [visitorPlayer, setVisitorPlayer] = useState(""); // Jugador visitante seleccionado
-  const [localPlayerData, setLocalPlayerData] = useState(null); // Datos del jugador local
-  const [visitorPlayerData, setVisitorPlayerData] = useState(null); // Datos del jugador visitante
+  const [teams, setTeams] = useState([]);
+  const [localTeam, setLocalTeam] = useState("");
+  const [visitorTeam, setVisitorTeam] = useState("");
+  const [localPlayers, setLocalPlayers] = useState([]);
+  const [visitorPlayers, setVisitorPlayers] = useState([]);
+  const [matchData, setMatchData] = useState(null);
 
-  // Fetch inicial para obtener la lista de equipos
   useEffect(() => {
     fetch("http://127.0.0.1:5000/api/teams")
       .then((res) => res.json())
@@ -23,125 +18,92 @@ function App() {
       .catch((error) => console.error("Error fetching teams:", error));
   }, []);
 
-  // Fetch de los jugadores cuando se selecciona un equipo local
+  const fetchPlayers = (teamName, setPlayers) => {
+    fetch(`http://127.0.0.1:5000/api/players/${encodeURIComponent(teamName)}`)
+      .then((res) => res.json())
+      .then((data) => setPlayers(data))
+      .catch((error) => console.error(`Error fetching players for ${teamName}:`, error));
+  };
+
   useEffect(() => {
-    if (localTeam) {
-      fetch(`http://127.0.0.1:5000/api/players/${encodeURIComponent(localTeam)}`)
-        .then((res) => res.json())
-        .then((data) => setLocalPlayers(data))
-        .catch((error) => console.error("Error fetching local players:", error));
-    } else {
-      setLocalPlayers([]);
-    }
+    if (localTeam) fetchPlayers(localTeam, setLocalPlayers);
+    else setLocalPlayers([]);
   }, [localTeam]);
 
-  // Fetch de los jugadores cuando se selecciona un equipo visitante
   useEffect(() => {
-    if (visitorTeam) {
-      fetch(`http://127.0.0.1:5000/api/players/${encodeURIComponent(visitorTeam)}`)
-        .then((res) => res.json())
-        .then((data) => setVisitorPlayers(data))
-        .catch((error) => console.error("Error fetching visitor players:", error));
-    } else {
-      setVisitorPlayers([]);
-    }
+    if (visitorTeam) fetchPlayers(visitorTeam, setVisitorPlayers);
+    else setVisitorPlayers([]);
   }, [visitorTeam]);
 
-  // Consultar los datos del jugador en el backend
-  const fetchPlayerData = (teamName, playerName, setPlayerData, homeOrAway, opponentTeam) => {
-    if (!teamName || !playerName || !homeOrAway || !opponentTeam) {
-      alert("Seleccione todos los parámetros antes de consultar.");
+  const fetchMatchData = async () => {
+    if (!localTeam || !visitorTeam) {
+      alert("Por favor, selecciona ambos equipos.");
       return;
     }
 
-    const url = `http://127.0.0.1:5000/api/player-stats?team=${encodeURIComponent(teamName)}&player_name=${encodeURIComponent(playerName)}&home_or_away=${encodeURIComponent(homeOrAway)}&opponent=${encodeURIComponent(opponentTeam)}`;
+    try {
+      const localTeamData = await Promise.all(
+        localPlayers.map((player) =>
+          fetch(
+            `http://127.0.0.1:5000/api/player-stats?team=${encodeURIComponent(localTeam)}&player_name=${encodeURIComponent(player)}&home_or_away=home&opponent=${encodeURIComponent(visitorTeam)}`
+          )
+            .then((res) => res.json())
+            .then((data) => ({ player, stats: data }))
+        )
+      );
 
-    fetch(url)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.error) {
-          alert(`Error: ${data.error}`);
-        } else {
-          setPlayerData(data);
-        }
-      })
-      .catch((error) => console.error("Error fetching player data:", error));
+      const visitorTeamData = await Promise.all(
+        visitorPlayers.map((player) =>
+          fetch(
+            `http://127.0.0.1:5000/api/player-stats?team=${encodeURIComponent(visitorTeam)}&player_name=${encodeURIComponent(player)}&home_or_away=away&opponent=${encodeURIComponent(localTeam)}`
+          )
+            .then((res) => res.json())
+            .then((data) => ({ player, stats: data }))
+        )
+      );
+
+      setMatchData({
+        local_team: { name: localTeam, players: localTeamData },
+        visitor_team: { name: visitorTeam, players: visitorTeamData },
+      });
+    } catch (error) {
+      console.error("Error fetching match data:", error);
+    }
   };
 
   return (
     <div className="container">
-          {/* Equipo Local */}
-          <div className="team-container">
-        <h2>Equipo Local</h2>
-        <TeamSelector
-          teams={teams}
-          selectedTeam={localTeam}
-          onSelectTeam={setLocalTeam}
-          label="Equipo Local"
-        />
-        <PlayerSelector
-          players={localPlayers}
-          selectedPlayer={localPlayer}
-          onSelectPlayer={setLocalPlayer}
-          label="Jugador Local"
-        />
-        <button
-          onClick={() =>
-            fetchPlayerData(localTeam, localPlayer, setLocalPlayerData, "home", visitorTeam)
-          }
-        >
-          Ver Estadísticas
-        </button>
-        {localPlayerData && (
-          <div className="player-data">
-            <h3>Estadísticas del Jugador Local</h3>
-            <GraphGenerator
-              playerName={localPlayer}
-              playerData={localPlayerData}
-              opponentTeam={visitorTeam}
-              location="home"
-            />
-          </div>
-        )}
+      <div className="teams-container">
+        {/* Equipo Local */}
+        <div className="team-section">
+          <TeamSelector
+            teams={teams}
+            selectedTeam={localTeam}
+            onSelectTeam={setLocalTeam}
+            label="Equipo Local"
+          />
+        </div>
+
+        {/* Equipo Visitante */}
+        <div className="team-section">
+          <TeamSelector
+            teams={teams}
+            selectedTeam={visitorTeam}
+            onSelectTeam={setVisitorTeam}
+            label="Equipo Visitante"
+          />
+        </div>
       </div>
 
-
-      {/* Equipo Visitante */}
-      <div className="team-container">
-        <h2>Equipo Visitante</h2>
-        <TeamSelector
-          teams={teams}
-          selectedTeam={visitorTeam}
-          onSelectTeam={setVisitorTeam}
-          label="Equipo Visitante"
-        />
-        <PlayerSelector
-          players={visitorPlayers}
-          selectedPlayer={visitorPlayer}
-          onSelectPlayer={setVisitorPlayer}
-          label="Jugador Visitante"
-        />
-        <button
-          onClick={() =>
-            fetchPlayerData(visitorTeam, visitorPlayer, setVisitorPlayerData, "away", localTeam)
-          }
-        >
-          Ver Estadísticas
-        </button>
-        {visitorPlayerData && (
-          <div className="player-data">
-            <h3>Estadísticas del Jugador Visitante</h3>
-            <GraphGenerator
-              playerName={visitorPlayer}
-              playerData={visitorPlayerData}
-              opponentTeam={localTeam}
-              location="away"
-            />
-          </div>
-        )}
+      <div className="fetch-button-container">
+        <button onClick={fetchMatchData}>GET DATA</button>
       </div>
 
-
+      {matchData && (
+        <div className="graph-section">
+          <GraphGenerator matchData={matchData} />
+        </div>
+      )}
     </div>
   );
 }
