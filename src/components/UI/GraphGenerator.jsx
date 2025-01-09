@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import RankingsBlock from "./RankingsBlock";
 import { Bar } from "react-chartjs-2";
-import "./GraphGenerator.css"; // Archivo CSS con los cambios
+import '../../App.css';
+
 
 function GraphGenerator({ matchData }) {
   const [selectedStat, setSelectedStat] = useState("");

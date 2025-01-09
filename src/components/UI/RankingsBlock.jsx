@@ -1,5 +1,6 @@
 import React from "react";
-import "./RankingsBlock.css"; // Archivo CSS con los cambios
+import '../../App.css';
+
 
 const RankingsBlock = ({ rankingItems }) => {
   if (!rankingItems || rankingItems.length === 0) {
